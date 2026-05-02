@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Ghost AI",
+  title: "System Spec",
   description: "AI-powered design collaboration",
 }
 
