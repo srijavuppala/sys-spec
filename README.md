@@ -6,7 +6,7 @@
 [![Liveblocks](https://img.shields.io/badge/Liveblocks-050505?style=for-the-badge&logo=liveblocks&logoColor=white)](https://liveblocks.io/)
 [![Trigger.dev](https://img.shields.io/badge/Trigger.dev-22c55e?style=for-the-badge&logo=triggerdotdev&logoColor=white)](https://trigger.dev/)
 [![Google Gemini](https://img.shields.io/badge/Google-Gemini-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)]
+]
 
 AI-powered collaborative system architecture platform that automates diagram creation from natural language prompts, enables real-time team collaboration, and generates comprehensive technical specifications. Processes plain-English requirements, builds interactive React Flow canvases, and converts visuals to detailed Markdown docs — all served through a modern Next.js dashboard with AI-powered insights via Google Gemini.
 
