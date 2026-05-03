@@ -44,13 +44,15 @@ export function ProjectSidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-3 left-3 top-[3.75rem] z-50 flex w-72 flex-col rounded-2xl border border-border-subtle bg-bg-surface/95 backdrop-blur-xl transition-transform duration-200",
-          isOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]"
+          "fixed inset-y-3 left-3 top-[3.75rem] z-50 flex w-72 flex-col rounded-2xl border border-border-subtle bg-bg-surface/95 backdrop-blur-xl will-change-transform transform-gpu transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+          isOpen ? "translate-x-0" : "-translate-x-[calc(100%+1rem)]",
+          // On desktop, keep the sidebar visible (no “hidden drawer” discoverability issues).
+          "lg:translate-x-0"
         )}
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-border-default px-4">
           <span className="text-sm font-medium text-text-primary">Projects</span>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} className="lg:hidden">
             <X className="h-4 w-4" />
             <span className="sr-only">Close sidebar</span>
           </Button>

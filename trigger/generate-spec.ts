@@ -2,8 +2,8 @@ import { schemaTask, metadata, logger } from "@trigger.dev/sdk/v3"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { generateText } from "ai"
 import { z } from "zod"
-import { put } from "@vercel/blob"
 import { prisma } from "@/lib/prisma"
+import { put } from "@vercel/blob"
 
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
@@ -99,6 +99,10 @@ export const generateSpec = schemaTask({
   retry: { maxAttempts: 2, minTimeoutInMs: 1000, maxTimeoutInMs: 10000, factor: 2 },
   run: async (payload) => {
     const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY })
+    const modelName =
+      process.env.GEMINI_SPEC_MODEL?.trim() ||
+      process.env.GEMINI_MODEL?.trim() ||
+      "gemini-2.0-flash"
 
     metadata.set("status", "starting")
     logger.info("Generating spec", {
@@ -112,38 +116,51 @@ export const generateSpec = schemaTask({
     const context = buildContext(payload.nodes, payload.edges, payload.chatHistory)
 
     const result = await generateText({
-      model: google("gemini-2.5-flash"),
+      model: google(modelName),
       system: SYSTEM_PROMPT,
       prompt: context,
     })
 
     const spec = result.text
 
-    metadata.set("status", "uploading")
+    metadata.set("status", "saving")
 
-    const blob = await put(
-      `specs/${payload.projectId}/${Date.now()}.md`,
-      spec,
-      {
+    // Create the metadata record first so we can use a stable spec id in the blob path.
+    const record = await prisma.projectSpec.create({
+      data: { projectId: payload.projectId, filePath: "" },
+      select: { id: true },
+    })
+
+    let persistedRef = ""
+    try {
+      const blob = await put(`specs/${payload.projectId}/${record.id}.md`, spec, {
         access: "private",
-        contentType: "text/markdown",
+        contentType: "text/markdown; charset=utf-8",
         addRandomSuffix: false,
         allowOverwrite: true,
-      }
-    )
-
-    const record = await prisma.projectSpec.create({
-      data: {
+      })
+      persistedRef = blob.url
+    } catch (err) {
+      // Backward-compatible fallback: store inline Markdown when Blob is not configured.
+      persistedRef = spec
+      logger.warn("Spec blob upload failed; falling back to inline storage", {
         projectId: payload.projectId,
-        filePath: blob.url,
-      },
+        specId: record.id,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    }
+
+    await prisma.projectSpec.update({
+      where: { id: record.id },
+      data: { filePath: persistedRef },
     })
 
     metadata.set("status", "complete")
     metadata.set("specLength", spec.length)
     metadata.set("specId", record.id)
+    metadata.set("specRefType", persistedRef.startsWith("http") ? "blob" : "inline")
     logger.info("Spec generated and saved", { length: spec.length, specId: record.id })
 
-    return { spec, specId: record.id }
+    return { spec, specId: record.id, specRef: persistedRef }
   },
 })

@@ -1,4 +1,3 @@
-import { get } from "@vercel/blob"
 import { prisma } from "@/lib/prisma"
 import { getCurrentProjectIdentity, userHasProjectAccess } from "@/lib/project-access"
 import type { NextRequest } from "next/server"
@@ -20,12 +19,18 @@ export async function GET(
   })
   if (!spec) return Response.json({ error: "Not found" }, { status: 404 })
 
-  const result = await get(spec.filePath, { access: "private" })
-  if (!result || result.statusCode !== 200 || !result.stream) {
-    return Response.json({ error: "File not found" }, { status: 404 })
+  // Blob-first: `filePath` is a Vercel Blob signed URL — fetch content directly.
+  // Fallback: older inline storage where `filePath` contains raw Markdown.
+  const ref = spec.filePath ?? ""
+  if (ref.startsWith("http")) {
+    const blobRes = await fetch(ref)
+    if (!blobRes.ok || !blobRes.body) {
+      return Response.json({ error: "Not found" }, { status: 404 })
+    }
+    return new Response(blobRes.body, {
+      headers: { "Content-Type": "text/markdown; charset=utf-8" },
+    })
   }
 
-  return new Response(result.stream, {
-    headers: { "Content-Type": "text/markdown; charset=utf-8" },
-  })
+  return new Response(ref, { headers: { "Content-Type": "text/markdown; charset=utf-8" } })
 }

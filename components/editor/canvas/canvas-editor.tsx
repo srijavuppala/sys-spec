@@ -252,6 +252,7 @@ export function CanvasEditor({ projectId, pendingTemplate, onTemplateImported, o
         connectionMode={ConnectionMode.Loose}
         connectionLineStyle={CONNECTION_LINE_STYLE}
         connectionLineType={ConnectionLineType.SmoothStep}
+        proOptions={{ hideAttribution: true }}
         className="bg-bg-base"
       >
         <Background

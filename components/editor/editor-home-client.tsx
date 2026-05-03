@@ -32,7 +32,7 @@ export function EditorHomeClient({ ownedProjects, sharedProjects }: EditorHomeCl
         onRename={actions.openRename}
         onDelete={actions.openDelete}
       />
-      <main className="flex-1 overflow-hidden flex items-center justify-center">
+      <main className="flex-1 overflow-hidden flex items-center justify-center lg:pl-80">
         <div className="flex flex-col items-center gap-4 text-center px-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-xl font-medium text-text-primary">

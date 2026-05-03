@@ -67,18 +67,21 @@ interface RunTrackerProps {
   runId: string
   publicToken: string
   onTerminal: (status: string, output: unknown) => void
+  onStatusChange?: (status: string) => void
 }
 
-function RunTracker({ runId, publicToken, onTerminal }: RunTrackerProps) {
+function RunTracker({ runId, publicToken, onTerminal, onStatusChange }: RunTrackerProps) {
   const { run } = useRealtimeRun(runId, { accessToken: publicToken })
   const firedRef = useRef(false)
 
   useEffect(() => {
-    if (!run || firedRef.current) return
+    if (!run) return
+    onStatusChange?.(run.status)
+    if (firedRef.current) return
     if (!(TERMINAL_STATUSES as readonly string[]).includes(run.status)) return
     firedRef.current = true
     onTerminal(run.status, run.output)
-  }, [run?.status, run?.id, onTerminal])
+  }, [run?.status, run?.id, onTerminal, onStatusChange])
 
   return null
 }
@@ -123,6 +126,7 @@ export function AiSidebar({ isOpen, onClose, roomId, projectId }: AiSidebarProps
   const [isSpecGenerating, setIsSpecGenerating] = useState(false)
   const [specRunId, setSpecRunId] = useState<string | null>(null)
   const [specPublicToken, setSpecPublicToken] = useState<string | null>(null)
+  const [specRunStatus, setSpecRunStatus] = useState<string>("")
 
   // Canvas storage for spec generation context
   // useStorage immutably serializes LiveMap as a plain readonly object, so use Object.values
@@ -169,9 +173,25 @@ export function AiSidebar({ isOpen, onClose, roomId, projectId }: AiSidebarProps
       setIsSpecGenerating(false)
       setSpecRunId(null)
       setSpecPublicToken(null)
-      if (status === "COMPLETED") fetchSpecs()
+      setSpecRunStatus("")
+      if (status === "COMPLETED") {
+        fetchSpecs()
+        createFeedMessage(CHAT_FEED_ID, {
+          sender: "System Spec",
+          role: "assistant",
+          content: "Your spec has been generated. You can view and download it in the Specs tab.",
+          timestamp: new Date().toISOString(),
+        }).catch(() => {})
+      } else {
+        createFeedMessage(CHAT_FEED_ID, {
+          sender: "System Spec",
+          role: "assistant",
+          content: "Spec generation failed. Please try again.",
+          timestamp: new Date().toISOString(),
+        }).catch(() => {})
+      }
     },
-    [fetchSpecs]
+    [fetchSpecs, createFeedMessage]
   )
 
   const handleRunTerminal = useCallback(
@@ -462,6 +482,7 @@ export function AiSidebar({ isOpen, onClose, roomId, projectId }: AiSidebarProps
           runId={specRunId}
           publicToken={specPublicToken}
           onTerminal={handleSpecRunTerminal}
+          onStatusChange={setSpecRunStatus}
         />
       )}
 
@@ -527,7 +548,7 @@ export function AiSidebar({ isOpen, onClose, roomId, projectId }: AiSidebarProps
 
     <aside
       className={cn(
-        "fixed inset-y-3 right-3 top-15 z-40 hidden w-84 flex-col rounded-3xl border border-border-subtle bg-bg-surface/95 backdrop-blur-xl transition-transform duration-200 md:flex",
+        "fixed inset-y-3 right-3 top-15 z-40 hidden w-84 flex-col rounded-3xl border border-border-subtle bg-bg-surface/95 backdrop-blur-xl will-change-transform transform-gpu transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] md:flex",
         isOpen ? "translate-x-0" : "translate-x-[calc(100%+1rem)]"
       )}
     >
@@ -798,6 +819,21 @@ export function AiSidebar({ isOpen, onClose, roomId, projectId }: AiSidebarProps
                 "Generate Spec"
               )}
             </Button>
+
+            {isSpecGenerating && (
+              <div className="flex items-center gap-2 rounded-xl border border-accent-ai/20 bg-accent-ai/10 px-3 py-2 text-xs text-accent-ai-text">
+                <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
+                <span className="truncate">
+                  {specRunStatus
+                    ? specRunStatus === "EXECUTING"
+                      ? "AI is writing your spec…"
+                      : specRunStatus === "QUEUED"
+                        ? "Queued, starting soon…"
+                        : "Processing…"
+                    : "Sending to AI…"}
+                </span>
+              </div>
+            )}
 
             {specsLoading ? (
               <div className="flex flex-1 items-center justify-center">

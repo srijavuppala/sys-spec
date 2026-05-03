@@ -1,6 +1,6 @@
 import { task } from "@trigger.dev/sdk/v3";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { generateText, tool } from "ai";
+import { generateText, tool, stepCountIs } from "ai";
 import { z } from "zod";
 import { LiveObject } from "@liveblocks/client";
 import type { LiveblocksNode, LiveblocksEdge } from "@liveblocks/react-flow";
@@ -159,6 +159,10 @@ export const designAgent = task({
   run: async (payload: { prompt: string; roomId: string; userId: string }) => {
     const lb = getLiveblocks();
     const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY });
+    const modelName =
+      process.env.GEMINI_DESIGN_MODEL?.trim() ||
+      process.env.GEMINI_MODEL?.trim() ||
+      "gemini-2.0-flash";
 
     await lb
       .setPresence(payload.roomId, {
@@ -193,11 +197,12 @@ export const designAgent = task({
       }
 
       const result = await generateText({
-        model: google("gemini-2.5-flash"),
+        model: google(modelName),
         system: buildSystemPrompt(),
         prompt: `User request: ${payload.prompt}\n\n${canvasContext}`,
         tools: canvasTools,
-        toolChoice: "required",
+        toolChoice: "auto",
+        stopWhen: stepCountIs(1),
       });
 
       const toolCalls = result.steps.flatMap((s) => s.toolCalls) as ToolCall[];

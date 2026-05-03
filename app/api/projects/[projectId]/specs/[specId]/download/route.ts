@@ -1,4 +1,3 @@
-import { get } from "@vercel/blob"
 import { prisma } from "@/lib/prisma"
 import { getCurrentProjectIdentity, userHasProjectAccess } from "@/lib/project-access"
 import type { NextRequest } from "next/server"
@@ -20,12 +19,22 @@ export async function GET(
   })
   if (!spec) return Response.json({ error: "Not found" }, { status: 404 })
 
-  const result = await get(spec.filePath, { access: "private" })
-  if (!result || result.statusCode !== 200 || !result.stream) {
-    return Response.json({ error: "File not found" }, { status: 404 })
+  const ref = spec.filePath ?? ""
+
+  if (ref.startsWith("http")) {
+    const blobRes = await fetch(ref)
+    if (!blobRes.ok || !blobRes.body) {
+      return Response.json({ error: "Not found" }, { status: 404 })
+    }
+    return new Response(blobRes.body, {
+      headers: {
+        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Disposition": `attachment; filename="spec-${specId}.md"`,
+      },
+    })
   }
 
-  return new Response(result.stream, {
+  return new Response(ref, {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       "Content-Disposition": `attachment; filename="spec-${specId}.md"`,

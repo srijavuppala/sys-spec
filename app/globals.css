@@ -5,18 +5,18 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-bg-base: #080809;
-  --color-bg-surface: #111114;
-  --color-bg-elevated: #18181c;
-  --color-bg-subtle: #1e1e23;
-  --color-border-default: #2a2a30;
-  --color-border-subtle: #3a3a42;
-  --color-text-primary: #f0f0f4;
-  --color-text-secondary: #c0c0cc;
-  --color-text-muted: #808090;
-  --color-text-faint: #505060;
-  --color-accent-primary: #00c8d4;
-  --color-accent-primary-dim: rgba(0, 200, 212, 0.12);
+  --color-bg-base: #08090f;
+  --color-bg-surface: #0d0e18;
+  --color-bg-elevated: #13141f;
+  --color-bg-subtle: #1a1b28;
+  --color-border-default: #1e2030;
+  --color-border-subtle: #252637;
+  --color-text-primary: #eeeeff;
+  --color-text-secondary: #a0a0c0;
+  --color-text-muted: #606080;
+  --color-text-faint: #3a3a55;
+  --color-accent-primary: oklch(0.72 0.16 220);
+  --color-accent-primary-dim: oklch(0.72 0.16 220 / 0.12);
   --color-accent-ai: #6457f9;
   --color-accent-ai-text: #8b82ff;
   --color-state-error: #ff4d4f;
@@ -25,8 +25,9 @@
 
   --radius: 0.75rem;
 
-  --font-heading: var(--font-geist-sans);
+  --font-heading: var(--font-syne);
   --font-sans: var(--font-geist-sans);
+  --font-label: var(--font-dm-mono);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -77,44 +78,128 @@
   body {
     background-color: var(--color-bg-base);
     color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  button, a, [role="button"] {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid oklch(0.72 0.16 220 / 0.42);
+    outline-offset: 2px;
+  }
+
+  /* Liveblocks may inject a "Powered by Liveblocks" badge depending on project settings. */
+  #liveblocks-badge {
+    display: none !important;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(180deg, var(--color-text-primary) 0%, rgba(240, 240, 244, 0.68) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .auth-grid {
+    background-color: var(--color-bg-base);
+    background-image:
+      radial-gradient(circle at 18% 22%, oklch(0.72 0.16 220 / 0.14) 0%, transparent 46%),
+      radial-gradient(circle at 78% 38%, rgba(100, 87, 249, 0.10) 0%, transparent 44%),
+      radial-gradient(circle at 64% 84%, oklch(0.72 0.16 220 / 0.06) 0%, transparent 48%),
+      linear-gradient(to right, rgba(200, 210, 255, 0.04), transparent 12%, transparent 88%, rgba(200, 210, 255, 0.03));
+    filter: saturate(1.15);
+  }
+
+  .auth-spotlights::before,
+  .auth-spotlights::after {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    pointer-events: none;
+    background: radial-gradient(circle at 35% 35%, oklch(0.72 0.16 220 / 0.10) 0%, transparent 55%);
+    transform: translate3d(0, 0, 0);
+  }
+
+  .auth-spotlights::after {
+    background: radial-gradient(circle at 70% 55%, rgba(100, 87, 249, 0.10) 0%, transparent 58%);
+  }
+
+  .auth-card {
+    border-radius: var(--radius-3xl);
+    border: 1px solid rgba(30, 32, 48, 0.80);
+    background: rgba(13, 14, 24, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.70),
+      0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    padding: 22px;
+  }
+
+  .canvas-edge-flow {
+    animation: canvas-edge-flow 2s linear infinite;
   }
 }
 
 /* Dark-only theme — no light mode. All variables default to dark values. */
 :root {
-  --background: #080809;
-  --foreground: #f0f0f4;
-  --card: #111114;
-  --card-foreground: #f0f0f4;
-  --popover: #18181c;
-  --popover-foreground: #f0f0f4;
-  --primary: #00c8d4;
-  --primary-foreground: #080809;
-  --secondary: #18181c;
-  --secondary-foreground: #f0f0f4;
-  --muted: #1e1e23;
-  --muted-foreground: #808090;
-  --accent: #1e1e23;
-  --accent-foreground: #f0f0f4;
+  --background: #08090f;
+  --foreground: #eeeeff;
+  --card: #0d0e18;
+  --card-foreground: #eeeeff;
+  --popover: #13141f;
+  --popover-foreground: #eeeeff;
+  --primary: oklch(0.72 0.16 220);
+  --primary-foreground: #08090f;
+  --secondary: #13141f;
+  --secondary-foreground: #eeeeff;
+  --muted: #1a1b28;
+  --muted-foreground: #606080;
+  --accent: #1a1b28;
+  --accent-foreground: #eeeeff;
   --destructive: #ff4d4f;
-  --border: #2a2a30;
-  --input: #2a2a30;
-  --ring: #00c8d4;
+  --border: #1e2030;
+  --input: #1e2030;
+  --ring: oklch(0.72 0.16 220);
   --radius: 0.75rem;
-  --chart-1: #00c8d4;
+  --chart-1: oklch(0.72 0.16 220);
   --chart-2: #6457f9;
   --chart-3: #34d399;
   --chart-4: #fbbf24;
   --chart-5: #ff4d4f;
-  --sidebar: #111114;
-  --sidebar-foreground: #f0f0f4;
-  --sidebar-primary: #00c8d4;
-  --sidebar-primary-foreground: #080809;
-  --sidebar-accent: #1e1e23;
-  --sidebar-accent-foreground: #f0f0f4;
-  --sidebar-border: #2a2a30;
-  --sidebar-ring: #00c8d4;
+  --sidebar: #0d0e18;
+  --sidebar-foreground: #eeeeff;
+  --sidebar-primary: oklch(0.72 0.16 220);
+  --sidebar-primary-foreground: #08090f;
+  --sidebar-accent: #1a1b28;
+  --sidebar-accent-foreground: #eeeeff;
+  --sidebar-border: #1e2030;
+  --sidebar-ring: oklch(0.72 0.16 220);
+}
+
+@keyframes canvas-node-on {
+  0%   { opacity: 0; }
+  5%   { opacity: 1; }
+  20%  { opacity: 1; }
+  25%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@keyframes canvas-edge-flow {
+  from { stroke-dashoffset: 60; }
+  to   { stroke-dashoffset: 0; }
+}
+
+@keyframes canvas-dot-pulse {
+  0%, 100% { opacity: 0.5; r: 2.5; }
+  50%       { opacity: 1;   r: 3.5; }
 }
